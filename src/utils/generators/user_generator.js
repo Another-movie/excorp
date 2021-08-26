@@ -154,10 +154,16 @@ const genUserName = (minLength, maxLength) => {
         })
         .join('')
 }
-const genTags = (minTagsCount) =>
-    Array.apply(null, Array(getRandomInt(minTagsCount, TAGS.length))).map(
-        () => TAGS[getRandomInt(0, TAGS.length)]
-    )
+const genTags = (minTagsCount) => {
+    const randTagsCount = getRandomInt(minTagsCount, TAGS.length)
+    const set = new Set()
+
+    for (let i = 0; i < randTagsCount; i++) {
+        set.add(TAGS[getRandomInt(0, TAGS.length)])
+    }
+
+    return [...set]
+}
 
 // main
 const generate = (idx) => {
@@ -180,23 +186,24 @@ const generate = (idx) => {
 }
 
 const setCurators = (users, usersCount) => {
-    users.forEach((user, idx) => {
-        const curatorId = users[getRandomInt(0, usersCount)].id
-        if (users[idx].id !== curatorId) {
-            users[idx].curator = curatorId
+    const getRandomCurator = () => users[getRandomInt(0, usersCount)].id
+    return users.map((user) => {
+        const curatorId = getRandomCurator()
+        if (user.id !== curatorId) {
+            user.curator = curatorId
         }
+
+        return user
     })
 }
 
 const init = () => {
     const recordsCount = getRandomInt(100, 150)
 
-    const users = Array.apply(null, Array(recordsCount))
-        .map(Number.prototype.valueOf, 0)
-        .map((_, idx) => generate(idx))
+    const users = [...Array(recordsCount)].map((_, idx) => generate(idx))
 
-    setCurators(users, recordsCount)
-    writeToFile(users)
+    const usersWithCurators = setCurators(users, recordsCount)
+    writeToFile(usersWithCurators)
 }
 
 init()
