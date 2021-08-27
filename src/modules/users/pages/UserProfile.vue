@@ -6,6 +6,8 @@
             <div class="user-profile__main--username">@{{ user.username }}</div>
         </div>
         <div class="user-profile__fields">
+            <!-- Еше один способ, воспользоваться готовой валидацией форм но все равно придется дописывать логику -->
+            <!-- <input type="text" minlength="3" maxlength="10" required /> -->
             <label class="user-profile__field" @dblclick="disableCreatedAt = false">
                 Created at
                 <input type="date" v-model="createdAt" :disabled="disableCreatedAt" />
@@ -13,10 +15,20 @@
             <label class="user-profile__field" @dblclick="disableUsername = false">
                 Username
                 <input type="text" v-model="user.username" :disabled="disableUsername" />
+                <span v-if="!isValidUserName" class="user-profile__field--error">
+                    {{
+                        isDuplicateUserName
+                            ? 'Имя пользователя уже занято'
+                            : 'Неверный формат имени'
+                    }}
+                </span>
             </label>
             <label class="user-profile__field" @dblclick="disableEmail = false">
                 Email
                 <input type="text" v-model="user.email" :disabled="disableEmail" />
+                <span v-if="!isValidEmail" class="user-profile__field--error">
+                    Используйте почту Gmail
+                </span>
             </label>
             <label class="user-profile__field" @dblclick="disableTags = false">
                 Tags
@@ -49,7 +61,7 @@
             </label>
         </div>
         <div class="user-profile__buttons">
-            <button class="save" @click="saveChanges" :disabled="!hasChanges">
+            <button class="save" @click="saveChanges" :disabled="!hasChanges || !isValidForm">
                 <img src="@/assets/icon_download.svg" alt="" />Save changes
             </button>
             <button @click="discardChanges" :disabled="!hasChanges">
@@ -112,6 +124,25 @@ export default {
             set(value) {
                 this.user.created_at = new Date(value)
             }
+        },
+        isDuplicateUserName() {
+            return this.users.some(
+                (user) => user.username === this.user.username && user.id !== this.user.id
+            )
+        },
+        isValidUserName() {
+            const reg = /^[A-Z0-9_]{3,10}$/i
+            const isValidString = reg.test(this.user.username)
+
+            return isValidString && !this.isDuplicateUserName
+        },
+        isValidEmail() {
+            const reg = /^[A-Z0-9_].*@gmail.com$/i
+
+            return reg.test(this.user.email)
+        },
+        isValidForm() {
+            return this.isValidEmail && this.isValidUserName
         },
         hasChanges() {
             return !isEqualObjs(this.user, this.baseUser)
@@ -206,6 +237,11 @@ export default {
         margin-bottom: 16px;
         width: 100%;
 
+        &--error {
+            color: #ff3333;
+            padding: 4px 0 0 8px;
+        }
+
         select {
             padding: 10px;
             margin-top: 8px;
@@ -253,6 +289,10 @@ export default {
 
             &:disabled {
                 color: rgba(0, 0, 0, 0.08);
+            }
+
+            &:invalid {
+                background: red;
             }
         }
     }
